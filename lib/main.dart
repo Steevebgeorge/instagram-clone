@@ -1,22 +1,19 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:instagram/constants/colors.dart';
 import 'package:instagram/firebase_options.dart';
+import 'package:instagram/providers/user_provider.dart';
 import 'package:instagram/screens/homescreen.dart';
 import 'package:instagram/screens/loginscreen.dart';
-import 'package:instagram/utils/colors.dart';
+import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(
-    const ProviderScope(
-      child: MyApp(),
-    ),
-  );
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -24,54 +21,58 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Social Media',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        scaffoldBackgroundColor: lightModeBackgroundColor,
-        textTheme: const TextTheme(
-          bodyMedium: TextStyle(
-            color: Colors.black,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (context) => UserProvider(),
+        )
+      ],
+      child: MaterialApp(
+        title: 'Frame Club',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData.light().copyWith(
+          primaryColor: Colors.black,
+          colorScheme: const ColorScheme.light(
+            secondary: Colors.black,
+          ),
+          scaffoldBackgroundColor: lightModeBackgroundColor,
+          bottomNavigationBarTheme: BottomNavigationBarThemeData(
+            showSelectedLabels: false,
+            showUnselectedLabels: false,
+            selectedItemColor: Colors.black,
+            unselectedItemColor: Colors.grey[500],
+            backgroundColor: lightModeBackgroundColor,
           ),
         ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue, foregroundColor: Colors.white),
+        darkTheme: ThemeData.dark().copyWith(
+          primaryColor: Colors.white,
+          colorScheme: const ColorScheme.dark(
+            secondary: Colors.black,
+          ),
+          scaffoldBackgroundColor: darkModeBackgroundColor,
         ),
-      ),
-      darkTheme: ThemeData(
-        scaffoldBackgroundColor: darkModeBackgroundColor,
-        textTheme: const TextTheme(
-          bodyMedium: TextStyle(color: Colors.white),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue, foregroundColor: Colors.white),
-        ),
-      ),
-      home: StreamBuilder(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(
-              body: Center(
+        home: StreamBuilder<User?>(
+          stream: FirebaseAuth.instance.authStateChanges(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
                 child: CircularProgressIndicator(),
-              ),
-            );
-          }
-          if (snapshot.hasError) {
-            return Scaffold(
-              body: Center(
-                child: Text('error : ${snapshot.error}'),
-              ),
-            );
-          }
-          if (snapshot.hasData) {
-            return const HomeScreen();
-          } else {
-            return const LoginScreen();
-          }
-        },
+              );
+            }
+
+            if (snapshot.hasError) {
+              return Center(
+                child: Text('Error: ${snapshot.error}'),
+              );
+            }
+
+            if (snapshot.hasData && snapshot.data != null) {
+              return const HomeScreen();
+            }
+
+            return const Loginscreen();
+          },
+        ),
       ),
     );
   }

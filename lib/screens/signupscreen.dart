@@ -1,218 +1,180 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:instagram/screens/loginscreen.dart';
-import 'package:instagram/services/authentication.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:instagram/constants/utils.dart';
+import 'package:instagram/screens/homescreen.dart';
+import 'package:instagram/services/authmethods.dart';
+import 'package:instagram/widgets/textfield.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
 
   @override
-  State<SignUpScreen> createState() => _SignUpScreenState();
+  State<SignUpScreen> createState() => _LoginscreenState();
 }
 
-class _SignUpScreenState extends State<SignUpScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final TextEditingController emailcontroller = TextEditingController();
-  final TextEditingController passwordcontroller = TextEditingController();
-  final TextEditingController usernamecontroller = TextEditingController();
-  bool isloading = false;
-
-  void registerUser() async {
-    final registerationValidation = _formKey.currentState!.validate();
-    if (registerationValidation) {
-      setState(() {
-        isloading = true;
-      });
-      try {
-        final result = await Authentication().signUpUser(
-            email: emailcontroller.text,
-            password: passwordcontroller.text,
-            username: usernamecontroller.text,
-            context: context);
-        if (result == 'success') {
-          if (mounted) {
-            Navigator.of(context).pop();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Account Successfully Created")),
-            );
-          }
-        }
-        setState(() {
-          isloading = false;
-        });
-      } on FirebaseAuthException catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).clearSnackBars();
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(e.code.toString())));
-        }
-      }
-    }
-  }
+class _LoginscreenState extends State<SignUpScreen> {
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController userNameController = TextEditingController();
+  Uint8List? _image;
+  bool _isLoading = false;
 
   @override
   void dispose() {
-    emailcontroller.dispose();
-    passwordcontroller.dispose();
-    usernamecontroller.dispose();
     super.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    userNameController.dispose();
+  }
+
+  void selectProfileImage() async {
+    Uint8List image = await getImage(ImageSource.gallery);
+    setState(() {
+      _image = image;
+    });
+  }
+
+  void _signUp() async {
+    if (_image == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Select a profile image')),
+      );
+      return;
+    }
+    setState(() {
+      _isLoading = true;
+    });
+
+    final result = await Authentication().signUp(
+      email: emailController.text,
+      password: passwordController.text,
+      userName: userNameController.text,
+      file: _image!,
+    );
+    if (result == "success creating account") {
+      if (mounted) {
+        Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => const HomeScreen(),
+        ));
+      }
+    }
+
+    if (mounted) {
+      customSnackBar(context, result);
+    }
+    setState(
+      () {
+        _isLoading = false;
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
     return Scaffold(
       body: SafeArea(
-        child: Container(
-          padding: const EdgeInsets.all(50),
-          child: SingleChildScrollView(
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  SizedBox(height: size.height * 0.09),
-                  Center(
-                    child: Text(
-                      "Instagram",
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.xanhMono(
-                          fontSize: 60, fontWeight: FontWeight.bold),
+        child: SingleChildScrollView(
+          child: Container(
+            height: MediaQuery.of(context).size.height * 0.9,
+            padding: const EdgeInsets.symmetric(horizontal: 25),
+            width: double.infinity,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Flexible(
+                  flex: 1,
+                  fit: FlexFit.loose,
+                  child: Container(),
+                ),
+                Text("FrameClub",
+                    style: GoogleFonts.xanhMono(
+                        fontSize: 40, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 30),
+                Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 70,
+                      backgroundImage: _image != null
+                          ? MemoryImage(_image!)
+                          : const NetworkImage(
+                                  "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Default_pfp.svg/340px-Default_pfp.svg.png?20220226140232")
+                              as ImageProvider,
                     ),
-                  ),
-                  TextFormField(
-                    style: TextStyle(
-                        color: Theme.of(context).textTheme.bodyMedium!.color),
-                    decoration: InputDecoration(
-                      label: const Text("User Name"),
-                      labelStyle: TextStyle(
-                          color: Theme.of(context).textTheme.bodyMedium!.color),
-                    ),
-                    controller: usernamecontroller,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return "enter a username";
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(
-                    height: size.height * 0.03,
-                  ),
-                  TextFormField(
-                    style: TextStyle(
-                        color: Theme.of(context).textTheme.bodyMedium!.color),
-                    decoration: InputDecoration(
-                      label: const Text("Email"),
-                      labelStyle: TextStyle(
-                          color: Theme.of(context).textTheme.bodyMedium!.color),
-                    ),
-                    controller: emailcontroller,
-                    validator: (value) {
-                      if (value == null ||
-                          value.trim().isEmpty ||
-                          !value.contains("@")) {
-                        return "Enter a valid email address";
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(
-                    height: size.height * 0.02,
-                  ),
-                  TextFormField(
-                    style: TextStyle(
-                        color: Theme.of(context).textTheme.bodyMedium!.color),
-                    decoration: InputDecoration(
-                      label: const Text("Password"),
-                      labelStyle: TextStyle(
-                          color: Theme.of(context).textTheme.bodyMedium!.color),
-                    ),
-                    obscureText: true,
-                    controller: passwordcontroller,
-                    validator: (value) {
-                      if (value == null ||
-                          value.trim().isEmpty ||
-                          value.trim().length < 6) {
-                        return "Passwords must be at least 6 characters";
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(
-                    height: size.height * 0.02,
-                  ),
-                  ElevatedButton(
-                    onPressed: registerUser,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context)
-                          .elevatedButtonTheme
-                          .style!
-                          .backgroundColor
-                          ?.resolve(
-                        {MaterialState.pressed},
-                      ),
-                      fixedSize: const Size(300, 50),
-                    ),
-                    child: !isloading
-                        ? const Text(
-                            "Sign Up",
-                            style: TextStyle(fontSize: 18),
-                          )
-                        : const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                            ),
-                          ),
-                  ),
-                  SizedBox(
-                    height: size.height * 0.02,
-                  ),
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.facebook,
-                        color: Colors.blue,
-                      ),
-                      SizedBox(
-                        width: 7,
-                      ),
-                      Text("Sign up with facebook")
-                    ],
-                  ),
-                  SizedBox(
-                    height: size.height * 0.02,
-                  ),
-                  const Text("OR"),
-                  SizedBox(
-                    height: size.height * 0.02,
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        "already have an account?",
-                        style: TextStyle(fontSize: 15),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context)
-                              .pushReplacement(MaterialPageRoute(
-                            builder: (context) => const LoginScreen(),
-                          ));
-                        },
-                        child: const Text(
-                          "Login in",
-                          style: TextStyle(color: Colors.blue, fontSize: 15),
+                    Positioned(
+                      bottom: 0,
+                      right: -10,
+                      child: IconButton(
+                        onPressed: selectProfileImage,
+                        icon: const Icon(
+                          Icons.add_a_photo,
+                          size: 30,
                         ),
                       ),
-                    ],
-                  )
-                ],
-              ),
+                    )
+                  ],
+                ),
+                const SizedBox(height: 20),
+                CustomTextField(
+                  hintText: 'Enter your Username',
+                  textFieldController: userNameController,
+                  textInputType: TextInputType.text,
+                ),
+                const SizedBox(height: 20),
+                CustomTextField(
+                  hintText: 'Enter your Email',
+                  textFieldController: emailController,
+                  textInputType: TextInputType.text,
+                ),
+                const SizedBox(height: 20),
+                CustomTextField(
+                  hintText: 'Enter your Password',
+                  textFieldController: passwordController,
+                  textInputType: TextInputType.text,
+                  isObscure: true,
+                ),
+                const SizedBox(height: 20),
+                GestureDetector(
+                  onTap: _signUp,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    width: double.infinity,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(2),
+                        color: Colors.blue),
+                    child: _isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              value: 15,
+                            ),
+                          )
+                        : const Text("Sign In",
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Flexible(
+                  flex: 1,
+                  fit: FlexFit.loose,
+                  child: Container(),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('Already have an account?'),
+                    const SizedBox(width: 10),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Login'),
+                    )
+                  ],
+                ),
+              ],
             ),
           ),
         ),

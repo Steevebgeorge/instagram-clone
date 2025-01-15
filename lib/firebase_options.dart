@@ -23,20 +23,11 @@ class DefaultFirebaseOptions {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -49,6 +40,23 @@ class DefaultFirebaseOptions {
     }
   }
 
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyCDZmKGNwmillPvRVXlV7Kk3T5p0WZWcQw',
+    appId: '1:917839972201:android:26c11fc1ca1377df651ff8',
+    messagingSenderId: '917839972201',
+    projectId: 'instagram-26378',
+    storageBucket: 'instagram-26378.appspot.com',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyAfEALjedO2sqgxnU0iTNQE--hwpyrpzuk',
+    appId: '1:917839972201:web:7599b6a259677fee651ff8',
+    messagingSenderId: '917839972201',
+    projectId: 'instagram-26378',
+    authDomain: 'instagram-26378.firebaseapp.com',
+    storageBucket: 'instagram-26378.appspot.com',
+  );
+
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyAfEALjedO2sqgxnU0iTNQE--hwpyrpzuk',
     appId: '1:917839972201:web:2c262bedf59428b8651ff8',
@@ -58,11 +66,22 @@ class DefaultFirebaseOptions {
     storageBucket: 'instagram-26378.appspot.com',
   );
 
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCDZmKGNwmillPvRVXlV7Kk3T5p0WZWcQw',
-    appId: '1:917839972201:android:26c11fc1ca1377df651ff8',
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyCDMoZYqT0ICjQqhf-hctZ7WiqOaf0tJh4',
+    appId: '1:917839972201:ios:a12fed1635071971651ff8',
     messagingSenderId: '917839972201',
     projectId: 'instagram-26378',
     storageBucket: 'instagram-26378.appspot.com',
+    iosBundleId: 'com.example.instagram',
   );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyCDMoZYqT0ICjQqhf-hctZ7WiqOaf0tJh4',
+    appId: '1:917839972201:ios:a12fed1635071971651ff8',
+    messagingSenderId: '917839972201',
+    projectId: 'instagram-26378',
+    storageBucket: 'instagram-26378.appspot.com',
+    iosBundleId: 'com.example.instagram',
+  );
+
 }
